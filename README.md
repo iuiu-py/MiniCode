@@ -1,113 +1,174 @@
 # MiniCode Python
 
-> Python implementation of the [MiniCode](https://github.com/LiuMengxuan04/MiniCode) ecosystem.
+<p align="center">
+  <strong>A self-regulating Python coding agent for local development.</strong>
+</p>
 
-## MiniCode Ecosystem
+<p align="center">
+  <a href="./README.zh-CN.md">简体中文</a>
+  ·
+  <a href="https://github.com/LiuMengxuan04/MiniCode">MiniCode Main Repo</a>
+  ·
+  <a href="https://github.com/QUSETIONS/MiniCode-Python">Python Repo</a>
+</p>
 
-- Main repository: [LiuMengxuan04/MiniCode](https://github.com/LiuMengxuan04/MiniCode)
-- Python version: [QUSETIONS/MiniCode-Python](https://github.com/QUSETIONS/MiniCode-Python)
-- Rust version: [harkerhand/MiniCode-rs](https://github.com/harkerhand/MiniCode-rs)
-- Submodule sync guide: [docs/SUBMODULE_SYNC.md](docs/SUBMODULE_SYNC.md)
+<p align="center">
+  <img alt="Python" src="https://img.shields.io/badge/Python-3.11%2B-3776AB?style=flat-square&logo=python&logoColor=white">
+  <img alt="Tests" src="https://img.shields.io/badge/tests-738%20passed-brightgreen?style=flat-square">
+  <img alt="Package" src="https://img.shields.io/badge/package-minicode--py-555?style=flat-square">
+</p>
 
-## Project Positioning
+MiniCode Python is the Python implementation in the MiniCode family. The main
+project is [LiuMengxuan04/MiniCode](https://github.com/LiuMengxuan04/MiniCode);
+this repository explores a Python-first agent runtime with cybernetic control,
+adaptive memory, and a testable local tool loop.
 
-This repository is the Python version of MiniCode, maintained as a language-specific subproject in the broader MiniCode ecosystem.
+Instead of treating context pressure, tool failures, memory noise, and cost
+drift as prompt-only problems, MiniCode Python measures them during execution
+and feeds those signals back into runtime decisions.
 
-If you came here from the main MiniCode repository, the important thing to know is:
+## Why It Exists
 
-- the main repository syncs a submodule commit
-- it does not automatically mirror the full live state of this repository
-- so the submodule pointer in the main repo may lag behind the latest changes here
+Most coding agents are model wrappers: prompt in, tool calls out, hope the loop
+stays healthy. MiniCode Python is built around a different idea:
 
-In other words, what gets synced upstream is a specific commit, not the whole repository state. If the main repo has not updated its submodule pointer yet, the content shown there can be older than what you see here.
+> a coding agent should observe itself while it works, then adjust its own
+> context, memory, verification, concurrency, and recovery behavior.
 
-For the exact maintainer workflow, see [docs/SUBMODULE_SYNC.md](docs/SUBMODULE_SYNC.md).
+That makes this repository useful as:
 
-## Related Repositories
+- a local coding-agent implementation you can inspect end to end;
+- a Python research bed for agent control, memory, and verification loops;
+- a companion implementation to the TypeScript MiniCode main repo;
+- a practical place to test ideas before they become larger platform features.
 
-| Repository | Role |
+## Highlights
+
+| Area | What MiniCode Python Adds |
 | --- | --- |
-| [MiniCode](https://github.com/LiuMengxuan04/MiniCode) | Main project entry and ecosystem hub |
-| [MiniCode-Python](https://github.com/QUSETIONS/MiniCode-Python) | Python implementation |
-| [MiniCode-rs](https://github.com/harkerhand/MiniCode-rs) | Rust implementation |
+| Runtime control | `CyberneticOrchestrator` coordinates context, cost, feedback, progress, memory, and recovery controllers. |
+| Context management | PID-style context pressure handling, compaction, budget adjustment, and predictive guards. |
+| Memory | Domain-aware retrieval, optional LLM reranking, prompt injection, reflection write-back, and maintenance. |
+| Tool loop | Local file/search/edit/command tools with scheduler-aware execution and error nudges. |
+| Recovery | Self-healing paths for context overflow, tool failures, oscillation, and resource pressure. |
+| Verification | Focused unit, integration, stress, and cybernetics tests across the active root package. |
 
-## What This Repository Provides
+## Architecture
 
-MiniCode Python is a terminal AI coding assistant implemented in Python, focused on:
+```mermaid
+flowchart LR
+    User["User task"] --> Loop["agent_loop.py"]
+    Loop --> Tools["Local tools<br/>files, search, edit, shell"]
+    Tools --> Loop
 
-- terminal-first coding workflows
-- tool calling and agent loop execution
-- TUI-based interactive experience
-- session persistence and recovery
-- permission-gated local execution
-- MCP integration
+    Loop --> Sensors["Sensors<br/>context, cost, errors, progress"]
+    Sensors --> Orchestrator["CyberneticOrchestrator"]
+    Orchestrator --> Control["Controllers<br/>PID, Kalman, prediction,<br/>memory, model, progress"]
+    Control --> Actions["Runtime actions<br/>compact, cap concurrency,<br/>adjust budget, inject memory,<br/>recover, reflect"]
+    Actions --> Loop
+```
 
-## Current Status
+The main loop now drives the orchestrator lifecycle directly:
 
-This repository is an actively developed Python implementation, not just a mirror of the main repository.
+- `wire_memory()`
+- `wire_healing()`
+- `inject_memories()`
+- `step_start()`
+- `step_end()`
+- `reflect_on_task()`
 
-It includes ongoing work in areas such as:
+This keeps controller initialization, memory injection, per-step observation,
+feedback, self-healing, and post-task reflection tied to the same runtime
+surface.
 
-- Python-side feature parity with the main MiniCode experience
-- TUI architecture cleanup
-- transcript and rendering performance improvements
-- MCP and tool execution improvements
-- session, context, and memory handling
+## Repository Status
+
+The active package is the root package configured in `pyproject.toml`.
+
+| Path | Role |
+| --- | --- |
+| `minicode/` | Canonical Python package used by install and tests. |
+| `tests/` | Active test suite. |
+| `py-src/minicode/` | Compatibility/staging mirror kept aligned for migration work. |
+| `docs/OPTIMIZATION_SUMMARY.md` | Full optimization and integration record. |
+| `docs/memory_theory.md` | Memory/control theory notes. |
+
+The main TypeScript repository may include this project as
+`external/MiniCode-Python`, but this Python package is installed and verified
+from this repository root.
 
 ## Quick Start
 
 ```bash
 git clone https://github.com/QUSETIONS/MiniCode-Python.git
 cd MiniCode-Python
-python -m minicode.main --install
+python -m pip install -e .[dev]
 ```
 
-Run directly:
+Run the CLI:
+
+```bash
+minicode-py
+```
+
+Or run the module directly:
 
 ```bash
 python -m minicode.main
 ```
 
-## Configuration
+## Verification
 
-Configure your model in `~/.mini-code/settings.json`:
-
-```json
-{
-  "model": "claude-sonnet-4-20250514",
-  "env": {
-    "ANTHROPIC_BASE_URL": "https://api.anthropic.com",
-    "ANTHROPIC_AUTH_TOKEN": "your-token-here"
-  }
-}
-```
-
-## Development
-
-Install dev dependencies and run tests:
+The current root package was verified with:
 
 ```bash
-pip install -e ".[dev]"
-pytest
+python -m compileall -q minicode py-src\minicode tests
+pytest -q
 ```
 
-Mock mode:
+Latest local result:
 
-```bash
-MINI_CODE_MODEL_MODE=mock python -m minicode.main
+```text
+738 passed, 2 skipped, 3 warnings
 ```
 
-## Sync Note For Main Repository Maintainers
+The warnings are unregistered `pytest.mark.benchmark` markers in benchmark
+tests. They do not indicate failing behavior.
 
-If this repository is consumed as a submodule from the main MiniCode repository:
+## Core Modules
 
-1. update the submodule pointer in the main repository
-2. commit that submodule pointer update upstream
-3. do not assume new commits here are automatically reflected there
+| Module | Purpose |
+| --- | --- |
+| `minicode/agent_loop.py` | Main model/tool loop and runtime control integration. |
+| `minicode/cybernetic_orchestrator.py` | Facade for controller lifecycle hooks. |
+| `minicode/context_cybernetics.py` | Context sensing, PID control, and compaction loop. |
+| `minicode/feedback_controller.py` | Outer-loop system-state to control-signal mapping. |
+| `minicode/self_healing_engine.py` | Fault detection and recovery delegation. |
+| `minicode/memory_pipeline.py` | Unified memory read/inject/write/maintain facade. |
+| `minicode/memory_reranker.py` | LLM-backed memory curation. |
+| `minicode/domain_classifier.py` | Task and file-domain inference. |
+| `minicode/model_registry.py` | Model selection controller. |
+| `minicode/progress_controller.py` | Task health and stall detection. |
 
-This distinction matters for README visibility, feature status, and release communication.
+## MiniCode Family
 
-## Acknowledgments
+| Version | Repository | Focus |
+| --- | --- | --- |
+| TypeScript | [LiuMengxuan04/MiniCode](https://github.com/LiuMengxuan04/MiniCode) | Mainline terminal agent, TUI, MCP, skills, sessions, context controls. |
+| Python | [QUSETIONS/MiniCode-Python](https://github.com/QUSETIONS/MiniCode-Python) | Cybernetic Python runtime, memory pipeline, verification-oriented experiments. |
+| Rust | [harkerhand/MiniCode-rs](https://github.com/harkerhand/MiniCode-rs/tree/master) | Rust implementation and systems-side experimentation. |
+| Java | [hobbescalvin414-tech/minicode4j](https://github.com/hobbescalvin414-tech/minicode4j/tree/feat/default-ts-ui) | Java implementation with a TypeScript-style UI direction. |
 
-- MiniCode main project: [LiuMengxuan04/MiniCode](https://github.com/LiuMengxuan04/MiniCode)
-- Rust implementation: [harkerhand/MiniCode-rs](https://github.com/harkerhand/MiniCode-rs)
+## Documentation
+
+- [Optimization Summary](./docs/OPTIMIZATION_SUMMARY.md)
+- [Memory Theory](./docs/memory_theory.md)
+- [Main MiniCode Repository](https://github.com/LiuMengxuan04/MiniCode)
+
+## Design Principles
+
+- Keep the agent loop inspectable.
+- Prefer measured runtime signals over hidden prompt magic.
+- Apply bounded actions: compact, cap, adjust, recover, reflect.
+- Treat verification and evidence as part of the agent runtime.
+- Keep the Python implementation useful as both software and research scaffold.

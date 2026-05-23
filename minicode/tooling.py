@@ -4,7 +4,6 @@ import re
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Callable, Protocol
-from abc import abstractmethod
 
 
 # ---------------------------------------------------------------------------
@@ -279,6 +278,9 @@ class ToolRegistry:
 
     def list(self) -> list[ToolDefinition]:
         return list(self._tools)
+
+    def list_all(self) -> list[str]:
+        return list(self._tool_index.keys())
 
     def get_skills(self) -> list[dict[str, Any]]:
         return list(self._skills)

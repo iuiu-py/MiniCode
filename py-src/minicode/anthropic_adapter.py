@@ -60,17 +60,20 @@ def _extract_error_message(data: Any, status: int) -> str:
     return f"Model request failed: {status}"
 
 
+# Precompute marker data for fast parsing
+_ASSISTANT_MARKERS = (
+    ("<final>", "final", "</final>"),
+    ("[FINAL]", "final", None),
+    ("<progress>", "progress", "</progress>"),
+    ("[PROGRESS]", "progress", None),
+)
+
+
 def _parse_assistant_text(content: str) -> tuple[str, str | None]:
     trimmed = content.strip()
     if not trimmed:
         return "", None
-    markers = [
-        ("<final>", "final", "</final>"),
-        ("[FINAL]", "final", None),
-        ("<progress>", "progress", "</progress>"),
-        ("[PROGRESS]", "progress", None),
-    ]
-    for prefix, kind, closing_tag in markers:
+    for prefix, kind, closing_tag in _ASSISTANT_MARKERS:
         if trimmed.startswith(prefix):
             raw = trimmed[len(prefix) :].strip()
             if closing_tag:
@@ -87,6 +90,13 @@ def _to_assistant_text(message: dict[str, Any]) -> str:
     if message["role"] == "assistant_progress":
         return f"<progress>\n{message['content']}\n</progress>"
     return message["content"]
+
+
+def _anthropic_messages_url(base_url: str) -> str:
+    base = base_url.rstrip("/")
+    if base.endswith("/v1"):
+        return base + "/messages"
+    return base + "/v1/messages"
 
 
 def _push_anthropic_message(messages: list[dict[str, Any]], role: str, block: dict[str, Any]) -> None:
@@ -167,7 +177,7 @@ class AnthropicModelAdapter:
             request_body["stream"] = True
 
         request = urllib.request.Request(
-            url=self.runtime["baseUrl"].rstrip("/") + "/v1/messages",
+            url=_anthropic_messages_url(self.runtime["baseUrl"]),
             data=json.dumps(request_body).encode("utf-8"),
             headers={
                 "content-type": "application/json",
