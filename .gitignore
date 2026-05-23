@@ -53,3 +53,11 @@ Thumbs.db
 # MiniCode specific
 .mini-code/
 minicode_session/
+.mini-code-memory/memory.json
+.mini-code-memory/pipeline_state.json
+.mini-code-memory/MEMORY.md
+.mini-code-memory-local/memory.json
+.mini-code-memory-local/MEMORY.md
+.mini-code-memory/MEMORY.md
+.gitignore
+.mini-code-memory/MEMORY.md

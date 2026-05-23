@@ -164,6 +164,7 @@ def test_tty_input_passes_and_persists_context_manager(tmp_path, monkeypatch) ->
         return [*kwargs["messages"], {"role": "assistant", "content": "done"}]
 
     monkeypatch.setattr(input_handler_module, "run_agent_turn", fake_run_agent_turn)
+    monkeypatch.setattr(input_handler_module, "save_history_entries", lambda _entries: None)
     monkeypatch.setattr(input_handler_module, "save_context_state", saved.append, raising=False)
 
     state = ScreenState(input="Please inspect context", cursor_offset=22)
@@ -183,3 +184,29 @@ def test_tty_input_passes_and_persists_context_manager(tmp_path, monkeypatch) ->
     assert captured["context_manager"] is context_manager
     assert saved == [context_manager]
     assert state.agent_result["messages"][-1] == {"role": "assistant", "content": "done"}
+
+
+def test_tty_tool_callbacks_can_use_time_after_busy_spinner_branch(tmp_path, monkeypatch) -> None:
+    def fake_run_agent_turn(**kwargs):
+        kwargs["on_tool_start"]("read_file", {"path": "README.md"})
+        kwargs["on_tool_result"]("read_file", "FILE: README.md\ncontent", False)
+        return [*kwargs["messages"], {"role": "assistant", "content": "done"}]
+
+    monkeypatch.setattr(input_handler_module, "run_agent_turn", fake_run_agent_turn)
+    monkeypatch.setattr(input_handler_module, "save_history_entries", lambda _entries: None)
+
+    args = TtyAppArgs(
+        runtime={"model": "default"},
+        tools=ToolRegistry([]),
+        model=object(),
+        messages=[{"role": "system", "content": "sys"}],
+        cwd=str(tmp_path),
+        permissions=PermissionManager(str(tmp_path)),
+    )
+    state = ScreenState(input="inspect readme", cursor_offset=14)
+
+    assert input_handler_module._handle_input(args, state, lambda: None) is False
+    state.agent_thread.join(timeout=5)
+
+    assert state.agent_result["messages"][-1] == {"role": "assistant", "content": "done"}
+    assert any(entry.kind == "tool" and entry.status == "success" for entry in state.transcript)

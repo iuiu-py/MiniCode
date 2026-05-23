@@ -1,22 +1,8 @@
 # MiniCode Python
 
-<p align="center">
-  <strong>一个具备自我调节能力的 Python 本地编码 Agent。</strong>
-</p>
+**一个具备自我调节能力的 Python 本地编码 Agent。**
 
-<p align="center">
-  <a href="./README.md">English</a>
-  ·
-  <a href="https://github.com/LiuMengxuan04/MiniCode">MiniCode 主仓库</a>
-  ·
-  <a href="https://github.com/QUSETIONS/MiniCode-Python">Python 仓库</a>
-</p>
-
-<p align="center">
-  <img alt="Python" src="https://img.shields.io/badge/Python-3.11%2B-3776AB?style=flat-square&logo=python&logoColor=white">
-  <img alt="Tests" src="https://img.shields.io/badge/tests-738%20passed-brightgreen?style=flat-square">
-  <img alt="Package" src="https://img.shields.io/badge/package-minicode--py-555?style=flat-square">
-</p>
+[English](./README.md) · [MiniCode 主仓库](https://github.com/LiuMengxuan04/MiniCode) · [Python 仓库](https://github.com/QUSETIONS/MiniCode-Python)
 
 MiniCode Python 是 MiniCode 家族中的 Python 实现。主项目是
 [LiuMengxuan04/MiniCode](https://github.com/LiuMengxuan04/MiniCode)；本仓库负责探索
@@ -39,14 +25,16 @@ Python-first 的 Agent 运行时，包括控制论编排、自适应记忆、本
 
 ## 核心亮点
 
-| 方向 | MiniCode Python 提供什么 |
-| --- | --- |
+
+| 方向    | MiniCode Python 提供什么                                |
+| ----- | --------------------------------------------------- |
 | 运行时控制 | `CyberneticOrchestrator` 统一协调上下文、成本、反馈、进度、记忆和恢复控制器。 |
-| 上下文管理 | PID 风格的上下文压力处理、压缩、预算调整和预测保护。 |
-| 记忆系统 | 领域感知检索、可选 LLM rerank、prompt 注入、任务反思写回和后台维护。 |
-| 工具循环 | 本地文件、搜索、编辑、命令工具，支持调度器感知执行和错误提示。 |
-| 故障恢复 | 面向上下文溢出、工具失败、振荡和资源压力的自愈路径。 |
-| 验证体系 | 覆盖根包的单元测试、集成测试、压力测试和控制论测试。 |
+| 上下文管理 | PID 风格的上下文压力处理、压缩、预算调整和预测保护。                        |
+| 记忆系统  | 领域感知检索、可选 LLM rerank、prompt 注入、任务反思写回和后台维护。         |
+| 工具循环  | 本地文件、搜索、编辑、命令工具，支持调度器感知执行和错误提示。                     |
+| 故障恢复  | 面向上下文溢出、工具失败、振荡和资源压力的自愈路径。                          |
+| 验证体系  | 覆盖根包的单元测试、集成测试、压力测试和控制论测试。                          |
+
 
 ## 架构
 
@@ -63,6 +51,8 @@ flowchart LR
     Actions --> Loop
 ```
 
+
+
 主循环现在直接驱动 orchestrator 生命周期：
 
 - `wire_memory()`
@@ -78,34 +68,167 @@ flowchart LR
 
 当前有效包是 `pyproject.toml` 配置的根目录包。
 
-| 路径 | 作用 |
-| --- | --- |
-| `minicode/` | 安装和测试使用的 canonical Python 包。 |
-| `tests/` | 当前有效测试套件。 |
-| `py-src/minicode/` | 兼容/迁移用镜像目录，会同步关键行为修复。 |
-| `docs/OPTIMIZATION_SUMMARY.md` | 完整优化和集成记录。 |
-| `docs/memory_theory.md` | 记忆和控制理论说明。 |
+
+| 路径                             | 作用                           |
+| ------------------------------ | ---------------------------- |
+| `minicode/`                    | 安装和测试使用的 canonical Python 包。 |
+| `tests/`                       | 当前有效测试套件。                    |
+| `py-src/minicode/`             | 兼容/迁移用镜像目录，会同步关键行为修复。        |
+| `docs/OPTIMIZATION_SUMMARY.md` | 完整优化和集成记录。                   |
+| `docs/memory_theory.md`        | 记忆和控制理论说明。                   |
+
 
 TypeScript 主仓库可以把本仓库作为 `external/MiniCode-Python` 关联进来，但 Python 包本身从本仓库根目录安装和验证。
 
 ## 快速开始
 
+推荐使用 `uv` 创建和管理开发环境：
+
 ```bash
-git clone https://github.com/QUSETIONS/MiniCode-Python.git
+python -m pip install --user uv
+```
+
+```bash
+git clone https://github.com/iuiu-py/MiniCode-Python.git
 cd MiniCode-Python
-python -m pip install -e .[dev]
+uv sync --extra dev
 ```
 
 运行 CLI：
 
 ```bash
-minicode-py
+uv run minicode-py
 ```
 
 或者直接运行模块：
 
 ```bash
-python -m minicode.main
+uv run python -m minicode.main
+```
+
+如果你更习惯 `pip`，也可以使用 editable install：
+
+```bash
+python -m pip install -e ".[dev]"
+```
+
+然后运行：
+
+```bash
+minicode-py
+```
+
+### 任意目录启动
+
+MiniCode 会把启动命令所在目录作为 workspace。想全局使用当前源码，并且普通源码改动后不需要重新安装，可以创建一个很小的启动脚本：
+
+```bash
+mkdir -p ~/.local/bin
+cat > ~/.local/bin/minicode-py <<'SH'
+#!/usr/bin/env bash
+exec uv run --project /home/zfwang/MiniCode minicode-py "$@"
+SH
+chmod +x ~/.local/bin/minicode-py
+```
+
+确认 `~/.local/bin` 已经在 `PATH` 里，然后就能在任意项目目录启动：
+
+```bash
+cd /path/to/your/project
+minicode-py
+```
+
+这种方式会把 `/home/zfwang/MiniCode` 作为 MiniCode 源码项目，但当前目录仍然是工具、记忆、MCP 配置和权限判断使用的 workspace。
+
+也可以用 `uv tool` 做 editable 安装：
+
+```bash
+uv tool install --editable /home/zfwang/MiniCode
+uv tool update-shell
+```
+
+editable tool 安装通常会在重启 `minicode-py` 后自动使用 Python 源码改动；只有改了 entry points、包元数据或依赖时才需要重新安装。
+
+## 配置
+
+MiniCode 会读取 `~/.mini-code/settings.json`，并与当前进程环境变量合并。环境变量优先级更高，因此可以把长期默认配置放在 settings 文件里，再用 shell 环境变量临时覆盖。
+
+可以手动创建配置文件：
+
+```bash
+mkdir -p ~/.mini-code
+$EDITOR ~/.mini-code/settings.json
+```
+
+真实 API key 不要提交到仓库，也不要出现在截图或共享日志里。
+
+Anthropic 示例：
+
+```json
+{
+  "model": "claude-sonnet-4-20250514",
+  "env": {
+    "ANTHROPIC_MODEL": "claude-sonnet-4-20250514",
+    "ANTHROPIC_API_KEY": "sk-ant-...",
+    "ANTHROPIC_BASE_URL": "https://api.anthropic.com"
+  }
+}
+```
+
+OpenAI 或 OpenAI-compatible 接口示例：
+
+```json
+{
+  "model": "gpt-4o",
+  "env": {
+    "OPENAI_API_KEY": "sk-...",
+    "OPENAI_BASE_URL": "https://api.openai.com"
+  }
+}
+```
+
+如果使用兼容 OpenAI 的代理或中转服务，`OPENAI_BASE_URL` 可以写服务根地址，也可以写带 `/v1` 的版本地址：
+
+```json
+{
+  "model": "gpt-4o",
+  "env": {
+    "OPENAI_API_KEY": "sk-...",
+    "OPENAI_BASE_URL": "https://your-provider.example.com/v1"
+  }
+}
+```
+
+OpenRouter 示例：
+
+```json
+{
+  "model": "anthropic/claude-sonnet-4",
+  "env": {
+    "OPENROUTER_API_KEY": "sk-or-...",
+    "OPENROUTER_BASE_URL": "https://openrouter.ai/api"
+  }
+}
+```
+
+自定义 OpenAI-compatible endpoint 示例：
+
+```json
+{
+  "model": "my-local-model",
+  "env": {
+    "CUSTOM_API_KEY": "local-or-proxy-key",
+    "CUSTOM_API_BASE_URL": "http://localhost:11434/v1"
+  }
+}
+```
+
+也可以完全使用 shell 环境变量：
+
+```bash
+export ANTHROPIC_MODEL=claude-sonnet-4-20250514
+export ANTHROPIC_API_KEY=sk-ant-...
+uv run minicode-py
 ```
 
 ## 验证
@@ -113,8 +236,8 @@ python -m minicode.main
 当前根包使用以下命令验证：
 
 ```bash
-python -m compileall -q minicode py-src\minicode tests
-pytest -q
+uv run python -m compileall -q minicode py-src/minicode tests
+uv run pytest -q
 ```
 
 最近一次本地结果：
@@ -127,27 +250,31 @@ pytest -q
 
 ## 核心模块
 
-| 模块 | 作用 |
-| --- | --- |
-| `minicode/agent_loop.py` | 主模型/工具循环和运行时控制集成。 |
-| `minicode/cybernetic_orchestrator.py` | 控制器生命周期 facade。 |
-| `minicode/context_cybernetics.py` | 上下文感知、PID 控制和压缩循环。 |
-| `minicode/feedback_controller.py` | 外环系统状态到控制信号的映射。 |
-| `minicode/self_healing_engine.py` | 故障检测和恢复委托。 |
-| `minicode/memory_pipeline.py` | 统一的记忆读取、注入、写回和维护接口。 |
-| `minicode/memory_reranker.py` | LLM 驱动的记忆策展。 |
-| `minicode/domain_classifier.py` | 任务和文件领域推断。 |
-| `minicode/model_registry.py` | 模型选择控制器。 |
-| `minicode/progress_controller.py` | 任务健康度和卡顿检测。 |
+
+| 模块                                    | 作用                  |
+| ------------------------------------- | ------------------- |
+| `minicode/agent_loop.py`              | 主模型/工具循环和运行时控制集成。   |
+| `minicode/cybernetic_orchestrator.py` | 控制器生命周期 facade。     |
+| `minicode/context_cybernetics.py`     | 上下文感知、PID 控制和压缩循环。  |
+| `minicode/feedback_controller.py`     | 外环系统状态到控制信号的映射。     |
+| `minicode/self_healing_engine.py`     | 故障检测和恢复委托。          |
+| `minicode/memory_pipeline.py`         | 统一的记忆读取、注入、写回和维护接口。 |
+| `minicode/memory_reranker.py`         | LLM 驱动的记忆策展。        |
+| `minicode/domain_classifier.py`       | 任务和文件领域推断。          |
+| `minicode/model_registry.py`          | 模型选择控制器。            |
+| `minicode/progress_controller.py`     | 任务健康度和卡顿检测。         |
+
 
 ## MiniCode 家族
 
-| 版本 | 仓库 | 重点 |
-| --- | --- | --- |
-| TypeScript | [LiuMengxuan04/MiniCode](https://github.com/LiuMengxuan04/MiniCode) | 主线终端 Agent、TUI、MCP、Skills、会话和上下文控制。 |
-| Python | [QUSETIONS/MiniCode-Python](https://github.com/QUSETIONS/MiniCode-Python) | 控制论 Python 运行时、记忆管线和面向验证的实验。 |
-| Rust | [harkerhand/MiniCode-rs](https://github.com/harkerhand/MiniCode-rs/tree/master) | Rust 实现和系统侧实验。 |
-| Java | [hobbescalvin414-tech/minicode4j](https://github.com/hobbescalvin414-tech/minicode4j/tree/feat/default-ts-ui) | Java 实现，沿用 TypeScript 风格 UI 方向。 |
+
+| 版本         | 仓库                                                                                                            | 重点                                  |
+| ---------- | ------------------------------------------------------------------------------------------------------------- | ----------------------------------- |
+| TypeScript | [LiuMengxuan04/MiniCode](https://github.com/LiuMengxuan04/MiniCode)                                           | 主线终端 Agent、TUI、MCP、Skills、会话和上下文控制。 |
+| Python     | [QUSETIONS/MiniCode-Python](https://github.com/QUSETIONS/MiniCode-Python)                                     | 控制论 Python 运行时、记忆管线和面向验证的实验。        |
+| Rust       | [harkerhand/MiniCode-rs](https://github.com/harkerhand/MiniCode-rs/tree/master)                               | Rust 实现和系统侧实验。                      |
+| Java       | [hobbescalvin414-tech/minicode4j](https://github.com/hobbescalvin414-tech/minicode4j/tree/feat/default-ts-ui) | Java 实现，沿用 TypeScript 风格 UI 方向。     |
+
 
 ## 文档
 
@@ -162,3 +289,4 @@ pytest -q
 - 运行时动作必须有边界：压缩、限流、调预算、恢复、反思。
 - 把验证和证据当作 Agent 运行时的一部分。
 - 让 Python 实现既能作为软件使用，也能作为研究脚手架。
+

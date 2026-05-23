@@ -8,11 +8,6 @@ from __future__ import annotations
 
 import time
 from dataclasses import dataclass, field
-from decimal import Decimal
-
-# Precomputed Decimal constants for performance
-_DECIMAL_1M = Decimal("1000000")
-_DECIMAL_2 = Decimal("2")
 
 # ---------------------------------------------------------------------------
 # Pricing (approximate, per 1M tokens)
@@ -183,10 +178,10 @@ def calculate_cost(
     """
     pricing = MODEL_PRICING.get(model, MODEL_PRICING["default"])
     return (
-        (input_tokens / _DECIMAL_1M) * pricing["input"]
-        + (output_tokens / _DECIMAL_1M) * pricing["output"]
-        + (cache_read_tokens / _DECIMAL_1M) * pricing["cache_read"]
-        + (cache_creation_tokens / _DECIMAL_1M) * pricing["cache_write"]
+        (input_tokens / 1_000_000) * pricing["input"]
+        + (output_tokens / 1_000_000) * pricing["output"]
+        + (cache_read_tokens / 1_000_000) * pricing["cache_read"]
+        + (cache_creation_tokens / 1_000_000) * pricing["cache_write"]
     )
 
 

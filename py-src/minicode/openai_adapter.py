@@ -12,6 +12,7 @@ import os
 import time
 import urllib.error
 import urllib.request
+from urllib.parse import urlparse
 from typing import Any, Callable
 
 from minicode.api_retry import RETRYABLE_STATUS, calculate_backoff
@@ -57,6 +58,22 @@ def _get_openai_api_key(runtime: dict) -> str:
         os.environ.get("OPENAI_API_KEY", "")
         or runtime.get("openaiApiKey", "")
     )
+
+
+def _openai_chat_completions_url(base_url: str) -> str:
+    """Build a chat completions URL from an OpenAI-compatible API base."""
+    base = base_url.rstrip("/")
+    parsed = urlparse(base)
+    if parsed.scheme not in {"http", "https"} or not parsed.netloc:
+        raise ValueError(
+            "OpenAI base URL must be an absolute http(s) URL, "
+            f"got {base_url!r}"
+        )
+    if base.endswith("/chat/completions"):
+        return base
+    if base.endswith("/v1"):
+        return f"{base}/chat/completions"
+    return f"{base}/v1/chat/completions"
 
 
 def _to_openai_messages(messages: list[dict[str, Any]]) -> tuple[str, list[dict[str, Any]]]:
@@ -210,7 +227,7 @@ class OpenAIModelAdapter:
                 request_body[k] = v
 
         request = urllib.request.Request(
-            url=f"{base_url}/v1/chat/completions",
+            url=_openai_chat_completions_url(base_url),
             data=json.dumps(request_body).encode("utf-8"),
             headers=headers,
             method="POST",

@@ -282,7 +282,6 @@ def _handle_input(
     """Returns True if /exit was typed."""
     if state.is_busy:
         # Animated spinner during tool execution
-        import itertools, time
         spinners = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏']
         tick = int(time.monotonic() * 8) % len(spinners)
         spin = spinners[tick]
