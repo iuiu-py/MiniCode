@@ -3,6 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from minicode.prompt_pipeline import PromptPipeline, read_file_cached
+from minicode.skills import routed_skill_summaries
 
 
 def _maybe_read(path: Path) -> str | None:
@@ -153,22 +154,26 @@ def build_system_prompt(
     # Skills section with conditional injection
     skills = extras.get("skills", [])
     if skills:
+        skill_query = str(
+            extras.get("skill_query")
+            or extras.get("current_user_input")
+            or extras.get("user_input")
+            or ""
+        ).strip()
+        routed_skills = routed_skill_summaries(skills, skill_query, max_results=6) if skill_query else list(skills)[:6]
+
         def _build_skills():
-            lines = ["Available skills:"]
+            lines = ["Available skills:", "(routed candidates for the current request)"]
             lines.extend(
-                f"- {skill['name']}: {skill['description']}" for skill in skills
+                _format_skill_prompt_line(skill) for skill in routed_skills
             )
             lines.extend([
                 "",
                 "SKILL USAGE GUIDE:",
-                "- When user asks for creative brainstorming, use 'brainstorming' skill",
-                "- When writing implementation plans, use 'writing-plans' skill",
-                "- When debugging systematically, use 'systematic-debugging' skill",
-                "- When doing TDD, use 'test-driven-development' skill",
-                "- When reviewing code in Chinese, use 'chinese-code-review' skill",
-                "- When user asks about workflows, check 'using-superpowers' skill first",
-                "- For complex multi-step tasks, consider 'subagent-driven-development'",
-                "- Before completing, ALWAYS use 'verification-before-completion'",
+                "- These are the highest-ranked skills for the current user request, selected by intent, tags, boundaries, and examples.",
+                "- If the user explicitly names a skill, call load_skill with that exact name even if it is not listed here.",
+                "- Prefer workflow_skill for multi-step work, skill_directory for choosing a family of skills, and atomic_tool only for narrow tool-like procedures.",
+                "- Before using a candidate, check its boundary hints and call load_skill to read the full SKILL.md.",
             ])
             return "\n".join(lines)
 
@@ -258,3 +263,17 @@ def build_system_prompt(
         )
 
     return pipeline.build()
+
+
+def _format_skill_prompt_line(skill: dict) -> str:
+    details: list[str] = []
+    if skill.get("layer"):
+        details.append(f"layer={skill['layer']}")
+    if skill.get("routeScore") is not None:
+        details.append(f"score={skill['routeScore']}")
+    if skill.get("routeReasons"):
+        details.append("why=" + ",".join(str(reason) for reason in skill["routeReasons"][:3]))
+    if skill.get("tags"):
+        details.append("tags=" + ",".join(str(tag) for tag in skill["tags"][:5]))
+    suffix = f" ({'; '.join(details)})" if details else ""
+    return f"- {skill['name']}: {skill['description']}{suffix}"

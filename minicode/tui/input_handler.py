@@ -398,6 +398,7 @@ def _handle_input(
                 "skills": args.tools.get_skills(),
                 "mcpServers": args.tools.get_mcp_servers(),
                 "memory_context": memory_mgr.get_relevant_context(query=input_text) if memory_mgr is not None else "",
+                "skill_query": input_text,
             },
         ),
     }

@@ -165,7 +165,7 @@ def try_handle_local_command(user_input: str, tools=None, cwd: str | None = None
         if not skills:
             return "No skills discovered. Add skills under ~/.mini-code/skills/<name>/SKILL.md, .mini-code/skills/<name>/SKILL.md, .claude/skills/<name>/SKILL.md, or ~/.claude/skills/<name>/SKILL.md."
         return "\n".join(
-            f"{skill['name']}  {skill['description']}  [{skill['source']}]"
+            _format_skill_listing(skill)
             for skill in skills
         )
 
@@ -288,6 +288,16 @@ def try_handle_local_command(user_input: str, tools=None, cwd: str | None = None
         return handle_user_command(args)
 
     return None
+
+
+def _format_skill_listing(skill: dict) -> str:
+    layer = skill.get("layer") or "workflow_skill"
+    intents = ",".join(skill.get("intents", [])[:3]) if skill.get("intents") else "-"
+    tags = ",".join(skill.get("tags", [])[:5]) if skill.get("tags") else "-"
+    return (
+        f"{skill['name']}  {skill['description']}  "
+        f"[{skill['source']}; layer={layer}; intents={intents}; tags={tags}]"
+    )
 
 
 def format_cybernetics_status() -> str:

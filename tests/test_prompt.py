@@ -43,3 +43,39 @@ def test_build_system_prompt_includes_memory_context(tmp_path: Path) -> None:
 
     assert "Project Memory & Context" in prompt
     assert "Always run pytest before release." in prompt
+
+
+def test_build_system_prompt_routes_skills_to_bounded_candidates(tmp_path: Path) -> None:
+    skills = [
+        {
+            "name": f"backend-{index}",
+            "description": "database api migration workflow",
+            "source": "test",
+            "tags": ["backend", "database"],
+            "intents": ["code"],
+        }
+        for index in range(8)
+    ]
+    skills.append(
+        {
+            "name": "frontend-dev",
+            "description": "react ui dashboard workflow",
+            "source": "test",
+            "tags": ["frontend", "react", "ui"],
+            "intents": ["code"],
+        }
+    )
+
+    prompt = build_system_prompt(
+        str(tmp_path),
+        [],
+        {
+            "skills": skills,
+            "skill_query": "Build a React dashboard UI",
+        },
+    )
+
+    assert "frontend-dev" in prompt
+    assert "backend-6" not in prompt
+    assert "backend-7" not in prompt
+    assert prompt.count("- backend-") <= 5

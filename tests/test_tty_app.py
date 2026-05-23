@@ -152,6 +152,39 @@ def test_empty_tty_return_does_not_start_input_handler(tmp_path) -> None:
     assert state.input == ""
 
 
+def test_exact_slash_command_return_submits_instead_of_reselecting(tmp_path) -> None:
+    calls = []
+    state = ScreenState(input="/skills", cursor_offset=7)
+    args = TtyAppArgs(
+        runtime=None,
+        tools=None,
+        model=None,
+        messages=[],
+        cwd=str(tmp_path),
+        permissions=PermissionManager(str(tmp_path)),
+    )
+
+    def rerender() -> None:
+        calls.append(("rerender", None))
+
+    def handle_input(_args, _state, _rerender, submitted_raw_input=None):
+        calls.append(("handle_input", submitted_raw_input))
+        return False
+
+    _handle_event(
+        args,
+        state,
+        KeyEvent(name="return", ctrl=False, meta=False),
+        rerender,
+        __import__("threading").Event(),
+        {},
+        handle_input,
+    )
+
+    assert ("handle_input", "/skills") in calls
+    assert state.input == ""
+
+
 def test_tty_input_passes_and_persists_context_manager(tmp_path, monkeypatch) -> None:
     captured: dict = {}
     saved: list[ContextManager] = []

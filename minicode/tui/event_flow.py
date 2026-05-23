@@ -266,11 +266,12 @@ def _handle_normal_mode_return(
     if visible_commands and 0 <= state.selected_slash_index < len(visible_commands):
         selected = visible_commands[state.selected_slash_index]
         usage = getattr(selected, "usage", str(selected))
-        state.input = usage
-        state.cursor_offset = len(state.input)
-        state.selected_slash_index = 0
-        rerender()
-        return
+        if state.input.strip() != usage:
+            state.input = usage
+            state.cursor_offset = len(state.input)
+            state.selected_slash_index = 0
+            rerender()
+            return
 
     submitted = state.input
     state.input = ""
